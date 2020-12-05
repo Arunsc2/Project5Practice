@@ -1,88 +1,140 @@
-package Project1;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+/**
+ * Functions for dealing with friends
+ *
+ * @author Arunav Sen Choudhuri
+ */
 public class FriendUtil {
-	
-	public Map<String, Set<UserInfo>> addFriends(UserInfo user1, UserInfo user2, Map<String, Set<UserInfo>> friendDirectory) {
-		if (!friendDirectory.containsKey(user1.getUserID()) || !friendDirectory.containsKey(user2.getUserID())){
-			// throw exception
-			System.out.println("User does not exist");
-			return Collections.emptyMap();	
-		}
-		
-		// add friend for user1
-		Set<UserInfo> user1Friends = friendDirectory.get(user1);
-		user1Friends.add(user2);
-		friendDirectory.put(user1.getUserID(), user1Friends);
-		
-		// add friend for user2
-		Set<UserInfo> user2Friends = friendDirectory.get(user2);
-		user2Friends.add(user2);
-		friendDirectory.put(user2.getUserID(), user2Friends);
-		
-		return friendDirectory;
-	}
-	
-	public Map<String, Set<UserInfo>> deleteFriends(UserInfo user1, UserInfo user2, Map<String, Set<UserInfo>> friendDirectory) {
-		
-		if (!friendDirectory.containsKey(user1.getUserID()) || !friendDirectory.containsKey(user2.getUserID())){
-			// unexpected issue - handle exception
-			System.out.println("User does not exist");
-			return Collections.emptyMap();	
-		}
-		
-		// remove friend from user1
-		Set<UserInfo> user1Friends = friendDirectory.get(user1);
-		user1Friends.remove(user2);
-		friendDirectory.put(user1.getUserID(), user1Friends);
-		
-		// remove friend from user2
-		Set<UserInfo> user2Friends = friendDirectory.get(user2);
-		user2Friends.remove(user2);
-		friendDirectory.put(user2.getUserID(), user2Friends);
-		
-		return friendDirectory;
-		
-	}
-	
-	public void printUserBasicInfo(Map<String, UserInfo> userAccounts) {
-		for (String user : userAccounts.keySet()) {
-			System.out.println("Basic User Info for "+ user + ": ");
-			System.out.println("     " +userAccounts.get(user));
-		}
-		System.out.println();
-	}
-	
-	public void printFriendDirectory(Map<String, Set<UserInfo>> friendDirectory) {
-		for (String user : friendDirectory.keySet()) {
-			System.out.println("Friends of "+ user + ": ");
-			for (UserInfo friend : friendDirectory.get(user)) {
-				System.out.println("    ["+ friend + "], ");
-			}
-		}
-		System.out.println();
-	}
-	
-	public void printHobbies(Map<String, ArrayList<String>> userHobbies) {
-		for (String user : userHobbies.keySet()) {
-			System.out.println("Hobbies of "+ user + ": ");
-			for (String str : userHobbies.get(user)) {
-				System.out.println("    [" + str + "], ");
-			}
-			System.out.println();
-		}
-	}
 
-	
-	
+    /**
+     * Allows user1 and user2 to be friends with each other
+     * @param user1 the first account
+     * @param user2 the second account
+     * @param accountDirectory the map of all the accounts
+     * @param friendDirectory the map of all the accounts with friends
+     * @return the updated friend map (friendDirectory)
+     * @throws AccountNotFoundException if either account is not found in the friend directory
+     */
+    public Map<String, List<Account>> addFriend(Account user1, Account user2, Map<String, Account> accountDirectory, Map<String, List<Account>> friendDirectory) throws AccountNotFoundException {
+        if(!accountDirectory.containsKey(user1.getUsername()) || !accountDirectory.containsKey(user2.getUsername())) {
+            throw new AccountNotFoundException("One of the accounts does not exist");
+        }
+
+        if(friendDirectory.containsKey(user1.getUsername()) && friendDirectory.containsKey(user2.getUsername())) {
+            //add friend to user1
+            List<Account> friendList1 = friendDirectory.get(user1.getUsername());
+            friendList1.add(user2);
+            friendDirectory.put(user1.getUsername(), friendList1);
+
+            //add friend to user2
+            List<Account> friendList2 = friendDirectory.get(user2.getUsername());
+            friendList2.add(user1);
+            friendDirectory.put(user2.getUsername(), friendList2);
+        } else if (!friendDirectory.containsKey(user1.getUsername())) { // user1 is not in the friendDirectory, but user2 is
+            //Create new friend list for user1, and add user2 to the list
+            List<Account> friendList1 = new ArrayList<Account>();
+            friendList1.add(user2);
+            friendDirectory.put(user1.getUsername(), friendList1);
+
+            //add friend to user2
+            List<Account> friendList2 = friendDirectory.get(user2.getUsername());
+            friendList2.add(user1);
+            friendDirectory.put(user2.getUsername(), friendList2);
+        } else { // user2 is not in the friend directory, but user1 is
+            //add friend to user1
+            List<Account> friendList1 = friendDirectory.get(user1.getUsername());
+            friendList1.add(user2);
+            friendDirectory.put(user1.getUsername(), friendList1);
+
+            // Create new friend list for user2, and add user1 to the list
+            List<Account> friendList2 = new ArrayList<Account>();
+            friendList2.add(user1);
+            friendDirectory.put(user2.getUsername(), friendList2);
+        }
+
+        return friendDirectory;
+    }
+
+    public Map<String, List<Account>> removeFriend(
+            Account user1, Account user2, Map<String, Account> accountDirectory, Map<String, List<Account>> friendDirectory) throws FriendNotFoundException, AccountNotFoundException{
+        if(!accountDirectory.containsKey(user1.getUsername()) || !accountDirectory.containsKey(user2.getUsername())) {
+            throw new AccountNotFoundException("One of the accounts does not exist");
+        }
+
+        if(!friendDirectory.containsKey(user1.getUsername()) || !friendDirectory.containsKey(user2.getUsername())) {
+            throw new FriendNotFoundException("One of or both users are not in the friendDirectory");
+        }
+
+        List<Account> friendListOfUser1 = friendDirectory.get(user1.getUsername());
+
+        if(!friendListOfUser1.contains(user2)) {
+            throw new FriendNotFoundException("The accounts are not friends with each other");
+        }
+
+        List<Account> friendListOfUser2 = friendDirectory.get(user2.getUsername());
+
+        friendListOfUser1.remove(user2);
+        friendListOfUser2.remove(user1);
+        friendDirectory.put(user1.getUsername(), friendListOfUser1);
+        friendDirectory.put(user2.getUsername(), friendListOfUser2);
+
+        return friendDirectory;
+    }
+
+    public Map<String, List<Account>> sendFriendRequest(Account user1, Account user2,
+                                                       Map<String, Account> accountDirectory, Map<String, List<Account>> friendRequestDirectory) throws AccountNotFoundException {
+
+
+        if(!accountDirectory.containsKey(user1.getUsername()) || !accountDirectory.containsKey(user2.getUsername())) {
+            throw new AccountNotFoundException("One of the accounts does not exist");
+        }
+
+        if(friendRequestDirectory.containsKey(user2)) {
+            List<Account> friendRequestList2 = friendRequestDirectory.get(user2.getUsername());
+            friendRequestList2.add(user1);
+            friendRequestDirectory.put(user2.getUsername(), friendRequestList2);
+        } else {
+            List<Account> friendRequestList2 = new ArrayList<Account>();
+            friendRequestList2.add(user1);
+            friendRequestDirectory.put(user2.getUsername(), friendRequestList2);
+        }
+        return friendRequestDirectory;
+    }
+
+    public static void removeFriendRequest(
+            Account user1, Account user2, Map<String, Account> accountDirectory, Map<String, List<Account>> friendRequestDirectory, AccountHandler server) throws FriendRequestNotFoundException, AccountNotFoundException {
+        if(!accountDirectory.containsKey(user1.getUsername()) || !accountDirectory.containsKey(user2.getUsername())) {
+            throw new AccountNotFoundException("One of the accounts does not exist");
+        }
+
+        if(!friendRequestDirectory.containsKey(user1.getUsername())) {
+            throw new FriendRequestNotFoundException("One or both of the accounts is not in the friendRequestDirectory");
+        }
+
+        List<Account> friendRequestListOfUser1 = friendRequestDirectory.get(user1.getUsername());
+
+        if(!friendRequestListOfUser1.contains(user2)) {
+            throw new FriendRequestNotFoundException("The friend request does not exist");
+        }
+
+        friendRequestListOfUser1.remove(user2);
+        friendRequestDirectory.put(user1.getUsername(), friendRequestListOfUser1);
+
+        server.setFriendRequestDirectory(friendRequestDirectory);
+    }
+
+    public void acceptFriendRequest(Account user1, Account user2, Map<String, Account> accountDirectory,
+                                    Map<String, List<Account>> friendDirectory, Map<String, List<Account>> friendRequestDirectory, AccountHandler handler)
+            throws AccountNotFoundException, FriendRequestNotFoundException {
+
+        removeFriendRequest(user1, user2, accountDirectory, friendRequestDirectory, handler);
+        Map<String, List<Account>> updatedFriendDirectory= addFriend(user1, user2, accountDirectory, friendDirectory);
+        handler.setFriendDirectory(updatedFriendDirectory);
+    }
+
+    // TODO Delete account
 
 }
